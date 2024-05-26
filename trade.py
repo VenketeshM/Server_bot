@@ -28,7 +28,7 @@ def get_balance_usdc():
 def set_volume():
     trading_balance = get_balance_usdc()
     risk_factor = 1
-    volume = trading_balance * risk_factor * 1
+    volume = trading_balance * risk_factor * 10
     return volume
 
 # Function to handle error printing
