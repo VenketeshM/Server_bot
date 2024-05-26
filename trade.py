@@ -6,7 +6,7 @@ from time import sleep
 from binance.error import ClientError
 
 key = "Xl7Bw0U7EVkuRykpxwHr2n7zIMVhlDhaxalRgL3TKFkSd5n8EPrRuVmtEF7Y2XOa"
-secret ="wpHKKRmaQsvbHhbBSsaDVqNUxJlTgKcMevjEGfzp4U7ee02tqVMafFpCgUGPBIeS"
+secret = "wpHKKRmaQsvbHhbBSsaDVqNUxJlTgKcMevjEGfzp4U7ee02tqVMafFpCgUGPBIeS"
 
 client = UMFutures(key=key, secret=secret)
 
@@ -25,8 +25,7 @@ def get_balance_usdc():
         print_error(error)
 
 # Function to calculate volume based on trading balance in USDC
-def set_volume():
-    trading_balance = get_balance_usdc()
+def set_volume(trading_balance):
     risk_factor = 1
     volume = trading_balance * risk_factor * 10
     return volume
@@ -43,7 +42,7 @@ def print_error(error):
 def klines(symbol):
     try:
         resp = pd.DataFrame(client.klines(symbol, '15m'))
-        resp = resp.iloc[:,:6]
+        resp = resp.iloc[:, :6]
         resp.columns = ['Time', 'Open', 'High', 'Low', 'Close', 'Volume']
         resp = resp.set_index('Time')
         resp.index = pd.to_datetime(resp.index, unit='ms')
@@ -132,8 +131,8 @@ def sma_signal(symbol):
 
 # Main loop for trading
 while True:
-    volume = set_volume()
     balance = get_balance_usdc()
+    volume = set_volume(balance)
     symbol = 'BTCUSDC'
     price = float(client.ticker_price(symbol)['price'])
     qty_precision = get_qty_precision(symbol)
@@ -180,5 +179,8 @@ while True:
             print('Placing SELL order for', symbol)
             open_order(symbol, 'sell', volume)
             sleep(10)
+    balance = get_balance_usdc()  # Calculate balance after executing an order
+    volume = set_volume(balance)  # Calculate new volume based on the updated balance
+    print("Updated balance is:", balance, "USDC")
     print('Waiting 3 min')
     sleep(180)
