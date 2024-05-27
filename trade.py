@@ -14,6 +14,7 @@ client = UMFutures(key=key, secret=secret)
 leverage = 10
 type = 'ISOLATED'
 
+
 # Function to get balance in USDC
 def get_balance_usdc():
     try:
@@ -23,12 +24,15 @@ def get_balance_usdc():
                 return float(elem['balance'])
     except ClientError as error:
         print_error(error)
+    return None
+
 
 # Function to calculate volume based on trading balance in USDC
 def set_volume(trading_balance):
     risk_factor = 1
-    volume = trading_balance * risk_factor * 10
+    volume = trading_balance * risk_factor * leverage
     return volume
+
 
 # Function to handle error printing
 def print_error(error):
@@ -37,6 +41,7 @@ def print_error(error):
             error.status_code, error.error_code, error.error_message
         )
     )
+
 
 # Function to get candles for the needed symbol
 def klines(symbol):
@@ -50,6 +55,8 @@ def klines(symbol):
         return resp
     except ClientError as error:
         print_error(error)
+    return pd.DataFrame()
+
 
 # Set leverage for the needed symbol
 def set_leverage(symbol, level):
@@ -60,6 +67,7 @@ def set_leverage(symbol, level):
         print(response)
     except ClientError as error:
         print_error(error)
+
 
 # Open new order with the last price
 def open_order(symbol, side, volume):
@@ -73,6 +81,7 @@ def open_order(symbol, side, volume):
         sleep(2)
     except ClientError as error:
         print_error(error)
+
 
 # Close opposite position
 def close_opposite_position(symbol, side):
@@ -90,6 +99,7 @@ def close_opposite_position(symbol, side):
             except ClientError as error:
                 print_error(error)
 
+
 # Your current positions
 def get_pos():
     try:
@@ -97,10 +107,13 @@ def get_pos():
         pos = []
         for elem in resp:
             if float(elem['positionAmt']) != 0:
-                pos.append({'symbol': elem['symbol'], 'side': 'BUY' if float(elem['positionAmt']) > 0 else 'SELL', 'positionAmt': float(elem['positionAmt'])})
+                pos.append({'symbol': elem['symbol'], 'side': 'BUY' if float(elem['positionAmt']) > 0 else 'SELL',
+                            'positionAmt': float(elem['positionAmt'])})
         return pos
     except ClientError as error:
         print_error(error)
+    return []
+
 
 # Get price precision for the symbol
 def get_price_precision(symbol):
@@ -108,6 +121,8 @@ def get_price_precision(symbol):
     for elem in resp:
         if elem['symbol'] == symbol:
             return elem['pricePrecision']
+    return 8
+
 
 # Get amount precision for the symbol
 def get_qty_precision(symbol):
@@ -115,6 +130,8 @@ def get_qty_precision(symbol):
     for elem in resp:
         if elem['symbol'] == symbol:
             return elem['quantityPrecision']
+    return 8
+
 
 # Strategy - SMA signal
 def sma_signal(symbol):
@@ -129,22 +146,26 @@ def sma_signal(symbol):
     else:
         return 'none'
 
+
 # Main loop for trading
 while True:
     balance = get_balance_usdc()
+    if balance is None:
+        print('Cannot connect to API. Check IP, restrictions, or wait some time.')
+        continue
+
     volume = set_volume(balance)
     symbol = 'BTCUSDC'
     price = float(client.ticker_price(symbol)['price'])
     qty_precision = get_qty_precision(symbol)
     sleep(1)
-    if balance is None:
-        print('Cannot connect to API. Check IP, restrictions, or wait some time.')
-        continue
+
     print("My balance is:", balance, "USDC")
     pos = get_pos()
     print(f'You have {len(pos)} opened positions:\n{pos}')
     qty = round(volume / price, qty_precision)
     signal = sma_signal(symbol)
+
     if len(pos) > 0:
         if pos[0]['side'] == 'BUY' and signal == 'down':
             close_opposite_position(symbol, 'buy')
@@ -179,6 +200,7 @@ while True:
             print('Placing SELL order for', symbol)
             open_order(symbol, 'sell', volume)
             sleep(10)
+
     balance = get_balance_usdc()  # Calculate balance after executing an order
     volume = set_volume(balance)  # Calculate new volume based on the updated balance
     print("Updated balance is:", balance, "USDC")
