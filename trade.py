@@ -169,7 +169,10 @@ while True:
     if len(pos) > 0:
         if pos[0]['side'] == 'BUY' and signal == 'down':
             close_opposite_position(symbol, 'buy')
-            sleep(1)
+            sleep(3)
+            balance = get_balance_usdc()
+            volume = set_volume(balance)
+            print("Updated balance after closing position:", balance, "USDC")
             set_leverage(symbol, leverage)
             sleep(1)
             print('Closing BUY position for', symbol)
@@ -177,7 +180,10 @@ while True:
             sleep(10)
         elif pos[0]['side'] == 'SELL' and signal == 'up':
             close_opposite_position(symbol, 'sell')
-            sleep(1)
+            sleep(3)
+            balance = get_balance_usdc()
+            volume = set_volume(balance)
+            print("Updated balance after closing position:", balance, "USDC")
             set_leverage(symbol, leverage)
             sleep(1)
             print('Closing SELL position for', symbol)
