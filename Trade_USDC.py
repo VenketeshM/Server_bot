@@ -5,8 +5,8 @@ import pandas as pd
 from time import sleep
 from binance.error import ClientError
 
-key = "Xl7Bw0U7EVkuRykpxwHr2n7zIMVhlDhaxalRgL3TKFkSd5n8EPrRuVmtEF7Y2XOa"
-secret = "wpHKKRmaQsvbHhbBSsaDVqNUxJlTgKcMevjEGfzp4U7ee02tqVMafFpCgUGPBIeS"
+key = "czmJx25NMHl0v2Kx43fzPOHU8582h2uOzOIm96jEV9ZEF1HtMKQtVFg3zKimIzhW"
+secret = "6JA5N4uB9BeKAPHxQq18ylGHpsRuBrXtoFZn6pULxkCNp4V5ggtCxsfhAn36fzeH"
 
 client = UMFutures(key=key, secret=secret)
 
