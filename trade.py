@@ -29,7 +29,7 @@ def get_balance_usdc():
 
 # Function to calculate volume based on trading balance in USDC
 def set_volume(trading_balance):
-    risk_factor = 1
+    risk_factor = 0.98
     volume = trading_balance * risk_factor * leverage
     return volume
 
@@ -74,13 +74,31 @@ def open_order(symbol, side, volume):
     price = float(client.ticker_price(symbol)['price'])
     qty_precision = get_qty_precision(symbol)
     qty = round(volume / price, qty_precision)
-    try:
-        resp = client.new_order(symbol=symbol, side=side.upper(), type='MARKET', quantity=qty)
-        print(symbol, side, "placing order")
-        print(resp)
-        sleep(2)
-    except ClientError as error:
-        print_error(error)
+    while qty > 0:
+        try:
+            resp = client.new_order(symbol=symbol, side=side.upper(), type='MARKET', quantity=qty)
+            print(symbol, side, "placing order")
+            print(resp)
+            sleep(2)
+            break
+        except ClientError as error:
+            if error.error_code == -2019:
+                qty = adjust_order_qty(symbol, qty)
+                print(f"Adjusted order quantity to {qty} due to insufficient margin.")
+            else:
+                print_error(error)
+                break
+
+
+# Adjust order quantity if margin is insufficient
+def adjust_order_qty(symbol, qty):
+    balance = get_balance_usdc()
+    if balance is None:
+        return 0
+    volume = set_volume(balance)
+    price = float(client.ticker_price(symbol)['price'])
+    qty_precision = get_qty_precision(symbol)
+    return round(volume / price, qty_precision)
 
 
 # Close opposite position
